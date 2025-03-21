@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fact Bot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .chat-container {
+            width: 400px;
+            margin: 50px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-box {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding-right: 10px;
+        }
+
+        .input-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 10px;
+        }
+
+        .user-message {
+            background-color: #3498db;
+            color: white;
+            text-align: right;
+        }
+
+        .bot-message {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            text-align: left;
+        }
+
+        .bot-typing {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .fact-button {
+            padding: 10px 20px;
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .fact-button:hover {
+            background-color: #e67e22;
+        }
+
+        .reset-button {
+            padding: 10px 20px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .reset-button:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-box" id="chatBox">
+        <div class="message bot-message">Hello! I'm Fact Bot. How can I help you today?</div>
+    </div>
+    <div class="input-container">
+        <input type="text" id="userInput" placeholder="Type your message..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    
+    <!-- Fact button placed below the input field -->
+    <button class="fact-button" onclick="sendFact()">Tell me a fact</button>
+    <!-- Reset button -->
+    <button class="reset-button" onclick="resetChat()">Reset Chat</button>
+</div>
+
+<!-- Footer Section -->
+<footer>
+    <p>Created by: G.Kavi Siva Murugan</p>
+    <p>Powered by: ChatGPT</p>
+</footer>
+
+<script>
+    // List of facts
+    const facts = [
+        "Did you know that honey never spoils? Archaeologists have found pots of honey in ancient tombs that are over 3000 years old.",
+        "The longest mountain range in the world is the Andes, stretching about 7,000 kilometers (4,350 miles).",
+        "A day on Venus is longer than a year on Venus. It takes Venus about 243 Earth days to rotate once on its axis, but only 225 Earth days to orbit the Sun.",
+        "The Eiffel Tower can grow by 6 inches in the summer due to thermal expansion of the metal.",
+        "Sharks have been around longer than trees! Sharks have existed for about 400 million years, while trees appeared around 350 million years ago.",
+        "Octopuses have three hearts. Two pump blood to the gills, while the third pumps it to the rest of the body.",
+        "Bananas are berries, but strawberries aren't!",
+        "The human nose can detect over 1 trillion different scents.",
+        "Water can boil and freeze at the same time. This is called the 'triple point' and it occurs under certain conditions of temperature and pressure.",
+        "The shortest war in history lasted just 38-45 minutes! It was between Britain and Zanzibar on August 27, 1896.",
+        "A group of flamingos is called a 'flamboyance.'",
+        "Wombats have cube-shaped poop.",
+        "The Great Wall of China is not a single continuous wall; it's a series of walls built by different dynasties over several centuries.",
+        "The inventor of the Pringles can is buried in one. Fred Baur, the man who invented the Pringles potato chip can, had his ashes buried in one.",
+        "The heart of a blue whale is the size of a small car.",
+        "A jiffy is an actual unit of time. It's 1/100th of a second.",
+        "The shortest commercial flight in the world is only 57 seconds long. It connects the Westray and Papa Westray islands in Scotland.",
+        "The longest hiccuping spree lasted 68 years. Charles Osborne had hiccups continuously from 1922 to 1990.",
+        "Elephants are the only animals that can't jump."
+    ];
+
+    let usedFacts = [];
+    let waitingForFactResponse = false;
+
+    // Function to simulate typing effect
+    function simulateTyping(response, callback) {
+        const chatBox = document.getElementById("chatBox");
+        const typingIndicator = document.createElement("div");
+        typingIndicator.classList.add("message", "bot-message", "bot-typing");
+        typingIndicator.textContent = "Fact Bot is typing...";
+        chatBox.appendChild(typingIndicator);
+
+        // Remove typing indicator and show the actual message after 2 seconds
+        setTimeout(() => {
+            typingIndicator.remove();
+            const botMessage = document.createElement("div");
+            botMessage.classList.add("message", "bot-message");
+            botMessage.textContent = response;
+            chatBox.appendChild(botMessage);
+            callback();
+        }, 2000);
+    }
+
+    // Function to get a random fact and prevent repeating the same fact
+    function getFact() {
+        if (usedFacts.length === facts.length) {
+            usedFacts = []; // Reset after all facts have been used
+        }
+
+        let randomIndex;
+        do {
+            randomIndex = Math.floor(Math.random() * facts.length);
+        } while (usedFacts.includes(randomIndex));
+
+        usedFacts.push(randomIndex);
+        return facts[randomIndex];
+    }
+
+    // Function to handle sending facts
+    function sendFact() {
+        const chatBox = document.getElementById("chatBox");
+        const fact = getFact();
+
+        // Simulate typing effect before showing the fact
+        simulateTyping(fact, () => {
+            chatBox.scrollTop = chatBox.scrollHeight;
+            waitingForFactResponse = false; // Stop waiting after the fact is shown
+        });
+    }
+
+    // Function to handle normal chatbot conversation
+    function sendMessage() {
+        const userInput = document.getElementById("userInput").value;
+        const chatBox = document.getElementById("chatBox");
+
+        if (userInput.trim() !== "") {
+            // Add user message to the chat box
+            const userMessage = document.createElement("div");
+            userMessage.classList.add("message", "user-message");
+            userMessage.textContent = userInput;
+            chatBox.appendChild(userMessage);
+
+            // Clear input field
+            document.getElementById("userInput").value = "";
+
+            const lowerCaseInput = userInput.toLowerCase();
+
+            // Handle specific commands (hi, yes, no)
+            if (lowerCaseInput === "hi") {
+                simulateTyping("Hello there! Would you like me to provide a fact?", () => {
+                    waitingForFactResponse = true; // Wait for "yes" or "no"
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                });
+            } else if (lowerCaseInput === "yes" && waitingForFactResponse) {
+                sendFact(); // Provide a fact
+            } else if (lowerCaseInput === "no" && waitingForFactResponse) {
+                simulateTyping("Goodbye!", () => {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                });
+                waitingForFactResponse = false; // Stop waiting for response
+            } else {
+                // Default response if nothing matches
+                simulateTyping("Sorry, I didn't understand. Please type 'hi' to start.", () => {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                });
+            }
+        }
+    }
+
+    // Function to reset the chat
+    function resetChat() {
+        const chatBox = document.getElementById("chatBox");
+        chatBox.innerHTML = ''; // Clear all messages
+        const initialMessage = document.createElement("div");
+        initialMessage.classList.add("message", "bot-message");
+        initialMessage.textContent = "Hello! I'm Fact Bot. How can I help you today?";
+        chatBox.appendChild(initialMessage);
+        waitingForFactResponse = false; // Reset waiting for response state
+    }
+
+    // Send message when Enter key is pressed
+    document.getElementById("userInput").addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+            sendMessage();
+        }
+    });
+</script>
+
+</body>
+</html>
